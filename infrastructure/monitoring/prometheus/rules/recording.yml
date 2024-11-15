@@ -1,0 +1,69 @@
+# Recording rules for monitoring API performance, system health, and business KPIs
+# Addresses success criteria requirements for system performance, platform stability, and user engagement
+
+groups:
+  # Requirement: System Performance - Monitor API response times to ensure <200ms for 95% of requests
+  - name: api_performance_rules
+    rules:
+      - record: job:http_request_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+        labels:
+          severity: warning
+        annotations:
+          description: "95th percentile of HTTP request duration over 5m window to track 200ms SLA"
+      
+      - record: job:http_requests_total:rate5m
+        expr: sum(rate(http_requests_total[5m])) by (status_code, handler)
+        labels:
+          severity: info
+        annotations:
+          description: "Request rate by status code and endpoint over 5m for traffic analysis"
+      
+      # Requirement: Platform Stability - Track platform uptime to maintain 99.9% availability
+      - record: job:http_errors_total:ratio5m
+        expr: sum(rate(http_requests_total{status_code=~"5..|4.."}[5m])) / sum(rate(http_requests_total[5m]))
+        labels:
+          severity: critical
+        annotations:
+          description: "Error ratio over 5m to monitor platform stability target of 99.9% uptime"
+
+  # Requirement: User Engagement - Track >80% completion rate for started drills
+  - name: drill_engagement_rules
+    rules:
+      - record: job:drill_completion:ratio1h
+        expr: sum(rate(drill_completions_total[1h])) / sum(rate(drill_starts_total[1h]))
+        labels:
+          severity: warning
+        annotations:
+          description: "Drill completion ratio over 1h to track 80% completion rate target"
+      
+      - record: job:drill_success:ratio1h
+        expr: sum(rate(drill_success_total[1h])) / sum(rate(drill_completions_total[1h]))
+        labels:
+          severity: info
+        annotations:
+          description: "Successful drill ratio over 1h to measure quality of completions"
+
+  # System health monitoring rules for infrastructure components
+  - name: system_health_rules
+    rules:
+      - record: job:edge_function_memory:bytes
+        expr: avg_over_time(process_resident_memory_bytes[5m])
+        labels:
+          severity: warning
+        annotations:
+          description: "Average memory usage of NextJS edge functions over 5m"
+      
+      - record: job:database_connections:current
+        expr: sum(pg_stat_activity_count) by (datname)
+        labels:
+          severity: warning
+        annotations:
+          description: "Current Supabase PostgreSQL database connections by database name"
+      
+      - record: job:cache_hit_ratio:5m
+        expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))
+        labels:
+          severity: warning
+        annotations:
+          description: "Redis cache hit ratio over 5m for performance optimization"
