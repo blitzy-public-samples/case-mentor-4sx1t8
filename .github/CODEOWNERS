@@ -1,0 +1,31 @@
+# Last matching pattern takes precedence
+
+# Global fallback ownership
+* @project-leads
+
+# Backend code ownership
+/src/backend/** @backend-team @security-team
+
+# Frontend code ownership
+/src/web/** @frontend-team
+
+# Infrastructure and deployment configuration
+/infrastructure/** @devops-team @security-team
+
+# Test files ownership
+*.test.ts @qa-team
+
+# Security-sensitive backend configuration
+/src/backend/config/** @security-team
+
+# Database files ownership
+*.sql @database-team @security-team
+
+# Authentication and authorization code
+/src/backend/lib/auth/** @security-team
+
+# CI/CD and configuration files
+*.yml @devops-team
+
+# Dependency management files
+package*.json @security-team @dependency-team
