@@ -1,0 +1,167 @@
+# Production Deployment Workflow for Case Interview Practice Platform
+# Requirements addressed:
+# - Deployment Pipeline: Production deployment with zero-downtime updates and edge network distribution
+# - System Performance: Ensure 99.9% uptime during peak usage and <200ms API response time
+
+name: Production Deployment
+
+# Human Tasks Required:
+# 1. Configure Vercel project and obtain VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID
+# 2. Set up repository secrets for all environment variables
+# 3. Configure DNS and SSL certificates in Vercel dashboard
+# 4. Set up monitoring alerts for performance thresholds
+# 5. Configure edge network regions in Vercel project settings
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: '18.x'
+  PNPM_VERSION: '8.x'
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+jobs:
+  security_checks:
+    name: Security Validation
+    uses: ./.github/workflows/security.yml
+
+  tests:
+    name: Test Suite
+    uses: ./.github/workflows/ci.yml
+
+  production_deploy:
+    name: Production Deployment
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [security_checks, tests]
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get PNPM store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup PNPM cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Dependencies
+        working-directory: src/web
+        run: pnpm install --frozen-lockfile
+
+      - name: Production Build
+        working-directory: src/web
+        run: |
+          pnpm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NODE_ENV: production
+
+      - name: Deploy to Vercel
+        uses: vercel/actions/deploy@v3
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: src/web
+
+  health_check:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: production_deploy
+    
+    steps:
+      - name: Wait for DNS Propagation
+        run: sleep 60
+
+      - name: Check Deployment Status
+        run: |
+          DEPLOY_URL="https://${{ env.VERCEL_PROJECT_ID }}.vercel.app"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $DEPLOY_URL)
+          if [ $HTTP_STATUS -ne 200 ]; then
+            echo "Deployment health check failed with status: $HTTP_STATUS"
+            exit 1
+          fi
+
+      - name: Verify API Response Times
+        run: |
+          MAX_RESPONSE_TIME=200
+          RESPONSE_TIME=$(curl -s -w "%{time_total}\n" -o /dev/null https://${{ env.VERCEL_PROJECT_ID }}.vercel.app/api/health)
+          RESPONSE_TIME_MS=$(echo "$RESPONSE_TIME * 1000" | bc)
+          if (( $(echo "$RESPONSE_TIME_MS > $MAX_RESPONSE_TIME" | bc -l) )); then
+            echo "API response time ($RESPONSE_TIME_MS ms) exceeds threshold of $MAX_RESPONSE_TIME ms"
+            exit 1
+          fi
+
+      - name: Check Edge Network Distribution
+        run: |
+          REGIONS=("iad1" "sfo1" "hnd1" "fra1")
+          for region in "${REGIONS[@]}"; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.VERCEL_PROJECT_ID }}-$region.vercel.app)
+            if [ $HTTP_STATUS -ne 200 ]; then
+              echo "Edge deployment in region $region failed with status: $HTTP_STATUS"
+              exit 1
+            fi
+          done
+
+      - name: Monitor Error Rates
+        run: |
+          ERROR_THRESHOLD=1
+          ERROR_RATE=$(curl -s https://${{ env.VERCEL_PROJECT_ID }}.vercel.app/api/metrics/errors)
+          if (( $(echo "$ERROR_RATE > $ERROR_THRESHOLD" | bc -l) )); then
+            echo "Error rate ($ERROR_RATE%) exceeds threshold of $ERROR_THRESHOLD%"
+            exit 1
+          fi
+
+      - name: Verify SSL/TLS Configuration
+        run: |
+          SSL_GRADE=$(curl -s https://api.ssllabs.com/api/v3/analyze?host=${{ env.VERCEL_PROJECT_ID }}.vercel.app | jq -r '.endpoints[0].grade')
+          if [[ "$SSL_GRADE" != "A" && "$SSL_GRADE" != "A+" ]]; then
+            echo "SSL configuration grade ($SSL_GRADE) is below required standard"
+            exit 1
+          fi
+
+      - name: Notify on Deployment Success
+        if: success()
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{"text":"✅ Production deployment completed successfully\nAll health checks passed\nAPI response times within threshold\nEdge network distribution verified"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on Deployment Failure
+        if: failure()
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{"text":"🚨 Production deployment failed\nCheck GitHub Actions logs for details"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
