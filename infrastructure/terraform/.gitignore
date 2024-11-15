@@ -1,0 +1,26 @@
+*.tfstate
+*.tfstate.*
+
+# Terraform crash logs that may contain sensitive debug information
+crash.log
+crash.*.log
+
+# Terraform variable files containing sensitive configuration and credentials
+*.tfvars
+*.tfvars.json
+
+# Local Terraform directory containing provider/module cache
+.terraform/
+
+# Terraform dependency lock file
+.terraform.lock.hcl
+
+# Terraform override files for environment-specific configurations
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform CLI configuration files that may contain credentials
+.terraformrc
+terraform.rc
