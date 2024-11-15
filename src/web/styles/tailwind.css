@@ -1,0 +1,60 @@
+/* Human Tasks:
+ * 1. Ensure @tailwindcss/typography v0.5.10 is installed
+ * 2. Ensure @tailwindcss/forms v0.5.7 is installed
+ * 3. Verify Inter and Roboto Mono fonts are properly loaded
+ */
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Import core Tailwind layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Configure base font families and text rendering */
+@layer base {
+  html {
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code, pre {
+    font-family: Roboto Mono, monospace;
+  }
+}
+
+/* Requirement: Component Library Support (7.1.2)
+ * Define reusable component classes for shadcn/ui integration */
+@layer components {
+  .btn {
+    @apply rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-base;
+  }
+
+  .card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+
+  .input {
+    @apply rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-base;
+  }
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Define utility classes for improved accessibility and user experience */
+@layer utilities {
+  /* Improved text readability */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hide scrollbars while maintaining functionality */
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+
+  /* Consistent focus ring for interactive elements */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-base focus-visible:ring-offset-2;
+  }
+}
