@@ -1,0 +1,67 @@
+# Grafana Datasource Configuration for Prometheus
+# Grafana Version: 9.5.0
+# Prometheus Version: 2.45.0
+
+# Requirement: Monitoring & Observability - Configure Prometheus datasource for comprehensive metrics collection
+# Requirement: System Performance - Enable monitoring of API response times
+# Requirement: Platform Stability - Support tracking of 99.9% uptime
+
+apiVersion: 1
+
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    version: 1
+    editable: true
+    
+    # Query and data collection settings
+    jsonData:
+      # Aligned with prometheus.yml scrape_interval
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: "POST"
+      manageAlerts: true
+      prometheusType: "Prometheus"
+      prometheusVersion: "2.45.0"
+      # Matches global scrape settings from prometheus.yml
+      scrapeInterval: "15s"
+      evaluationInterval: "15s"
+      # Enable exemplars for high-cardinality tracking
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+      # Alert state tracking
+      alertingEnabled: true
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: "10m"
+      # Cache configuration for better query performance
+      cacheLevel: "strong"
+      disableRecordingRules: false
+      
+    # Secure headers for authentication
+    secureJsonData:
+      httpHeaderName1: "X-Scope-OrgID"
+    
+    # Health check and validation settings
+    healthchecks:
+      # Validates connection to Prometheus server
+      prometheus:
+        timeout: 10s
+        path: "/api/v1/status/config"
+        validStatusCodes: [200]
+      # Checks scrape target availability
+      targets:
+        timeout: 10s
+        path: "/api/v1/targets"
+        validStatusCodes: [200]
+    
+    # Dashboard provisioning settings
+    dashboardPriority: 1
+    timezoneMode: "browser"
