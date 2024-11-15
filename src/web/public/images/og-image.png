@@ -1,0 +1,19 @@
+[Binary image data with the following specifications:
+
+Format: PNG
+Dimensions: 1200x630 pixels
+Color Space: RGB
+Background: #0F172A (Dark blue)
+
+Elements:
+1. Logo (centered, 120x120px, #3B82F6 blue, 32px margin bottom)
+2. Text "Case Interview Practice Platform" (centered, Inter font, 600 weight, 48px size, 1.2 line height, #FFFFFF white, max-width 800px)
+
+Metadata:
+- Purpose: Social media preview image
+- Usage: Facebook Open Graph, Twitter Card, LinkedIn post preview
+- Alt text: "Case Interview Practice Platform - AI-powered interview preparation"
+- Role: img
+- ARIA-hidden: true
+- File size: < 200KB
+]
