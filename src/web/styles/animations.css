@@ -1,0 +1,138 @@
+/* Human Tasks:
+ * 1. Verify prefers-reduced-motion is properly supported in target browsers
+ * 2. Test animations with screen readers and assistive technologies
+ * 3. Validate animation timing against Web Content Accessibility Guidelines (WCAG) 2.1
+ */
+
+/* Import tailwind utilities - tailwindcss v3.0.0+ */
+@import './tailwind.css';
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Define core animation keyframes with consistent timing functions */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Requirement: System Performance (2. SYSTEM OVERVIEW/Success Criteria)
+ * Implement optimized animation classes with sub-200ms durations */
+.animate-spin {
+  animation: spin 1s linear infinite;
+  will-change: transform;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+  will-change: opacity;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-float {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .animate-spin {
+    animation: spin 4s linear infinite !important;
+  }
+}
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Add transition utilities for interactive elements */
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Performance optimizations for animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
