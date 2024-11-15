@@ -1,0 +1,65 @@
+# Human Tasks:
+# 1. Verify network access and credentials for all monitoring targets
+# 2. Ensure alertmanager service is properly configured at alertmanager:9093
+# 3. Confirm Redis exporter is running on redis:9121
+# 4. Validate retention storage path has sufficient disk space for 50GB limit
+
+# Prometheus Configuration
+# Version: 2.45.0
+
+# Global settings for scraping targets
+# Requirement: Monitoring & Observability - Configure comprehensive metrics collection
+global:
+  scrape_interval: 15s     # How frequently to scrape targets
+  evaluation_interval: 15s  # How frequently to evaluate rules
+  scrape_timeout: 10s      # How long until a scrape request times out
+
+# Rule files containing recording and alerting rules
+# Requirement: System Performance - Monitor API response times
+# Requirement: Platform Stability - Track platform uptime
+rule_files:
+  - './rules/recording.yml'  # Pre-computed metrics and aggregations
+  - './rules/alerts.yml'     # Alert definitions for SLO monitoring
+
+# Alerting configuration
+alerting:
+  alert_relabel_configs:
+    - source_labels: ['severity']
+      target_label: 'alert_severity'
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+# Storage configuration for metrics retention
+storage:
+  tsdb:
+    retention_time: 15d    # How long to retain metrics data
+    retention_size: 50GB   # Maximum storage size for metrics
+
+# Scrape configurations
+scrape_configs:
+  # Edge Functions monitoring
+  # Requirement: System Performance - Monitor API response times to ensure <200ms
+  - job_name: 'edge-functions'
+    metrics_path: '/metrics'
+    scheme: 'https'
+    static_configs:
+      - targets: ['api.caseprep.vercel.app']
+    relabel_configs:
+      - source_labels: ['__address__']
+        target_label: 'instance'
+
+  # Supabase database monitoring
+  # Requirement: Platform Stability - Track platform uptime
+  - job_name: 'supabase'
+    metrics_path: '/metrics'
+    scheme: 'https'
+    static_configs:
+      - targets: ['db.caseprep.supabase.co:9090']
+
+  # Redis cache monitoring
+  # Requirement: Monitoring & Observability - Configure comprehensive metrics
+  - job_name: 'redis'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['redis:9121']
