@@ -1,0 +1,17 @@
+# Requirements addressed:
+# - Development Process (4.5): Standardized issue management and template configuration
+# - Quality Assurance (2.0): Structured issue reporting for platform stability
+
+blank_issues_enabled: false
+
+# Template configuration for standardized issue types
+contact_links:
+  - name: Platform Documentation
+    url: https://docs.caseinterviewpractice.com
+    about: Check the documentation before creating an issue
+  - name: Support Portal
+    url: https://support.caseinterviewpractice.com
+    about: Get help with subscription and account issues
+  - name: Feature Roadmap
+    url: https://roadmap.caseinterviewpractice.com
+    about: View planned features and enhancements
