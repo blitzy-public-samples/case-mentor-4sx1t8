@@ -1,0 +1,38 @@
+.git
+.github
+
+# Node.js dependencies and build outputs
+**/node_modules
+**/dist
+**/coverage
+
+# Next.js build output
+**/.next
+
+# Test files and configurations
+**/*.test.ts
+**/*.test.tsx
+**/jest.config.*
+playwright-report
+
+# Infrastructure and deployment files
+infrastructure/terraform
+infrastructure/monitoring
+docker-compose*.yml
+.vercel
+
+# Environment and sensitive files
+**/.env*
+
+# Development configurations
+.vscode
+.husky
+.eslintrc*
+.prettierrc*
+**/tsconfig.json
+
+# Documentation and logs
+**/README.md
+**/*.md
+**/*.log
+LICENSE
