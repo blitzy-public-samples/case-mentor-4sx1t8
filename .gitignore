@@ -1,0 +1,48 @@
+node_modules/
+
+# Environment Variables - Protecting sensitive API keys and configuration
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env*.local
+
+# Build and Distribution
+.next/
+build/
+dist/
+coverage/
+
+# System Files
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Deployment and Cache
+.vercel
+.turbo
+.swc
+
+# SSL/TLS Certificates
+*.pem
+
+# Terraform Files
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+
+# IDE and Editor Files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
