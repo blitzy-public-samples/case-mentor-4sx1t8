@@ -1,0 +1,48 @@
+# Human Tasks:
+# 1. Ensure REDIS_PASSWORD environment variable is set before running containers
+# 2. Verify host machine has at least 2.5GB available memory for Redis container
+
+version: '3.8'
+
+services:
+  redis:
+    # Redis v6.0 - Official Redis Image
+    image: redis:6.0
+    container_name: case_interview_redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    volumes:
+      # Mount custom redis.conf for optimized cache settings
+      - type: bind
+        source: ./redis.conf
+        target: /usr/local/etc/redis/redis.conf
+      # Persistent volume for Redis data
+      - type: volume
+        source: redis_data
+        target: /data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          # REQ: Development Containers - 2GB memory limit for Redis container
+          memory: 2GB
+    healthcheck:
+      test: redis-cli ping
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - cache_network
+
+volumes:
+  # REQ: Caching Strategy - Persistent storage for cached API responses and session data
+  redis_data:
+    driver: local
+
+networks:
+  # REQ: System Performance - Isolated network for optimized cache access
+  cache_network:
+    driver: bridge
