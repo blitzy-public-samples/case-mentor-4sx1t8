@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Human Tasks:
+1. Verify the logo dimensions match your design system's specifications
+2. Confirm the color values align with your brand guidelines
+3. Test the logo rendering across specified browser versions
+4. Validate WCAG 2.1 AA compliance with color contrast tools
+-->
+<svg 
+    width="200" 
+    height="32" 
+    viewBox="0 0 200 32" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="Case Interview Practice Platform Logo"
+>
+    <!-- REQ: Design System Specifications - Implementing light color scheme for dark mode -->
+    <style>
+        .primary { fill: #FFFFFF; }
+        .secondary { fill: #F8FAFC; }
+        
+        @media (hover: hover) {
+            .logo-group:hover {
+                opacity: 0.9;
+            }
+        }
+        
+        .logo-group:active {
+            opacity: 0.8;
+        }
+        
+        .logo-group.disabled {
+            opacity: 0.5;
+        }
+    </style>
+
+    <!-- REQ: Theme Support - Logo group with theme-specific colors -->
+    <g class="logo-group">
+        <!-- Main hexagon shape representing structured thinking -->
+        <path 
+            class="primary"
+            d="M16 0L30.785 8V24L16 32L1.215 24V8L16 0Z"
+            fill-opacity="1"
+        />
+        
+        <!-- Inner hexagon pattern symbolizing framework layers -->
+        <path 
+            class="secondary"
+            d="M16 4L27.856 10.5V23.5L16 30L4.144 23.5V10.5L16 4Z"
+            fill-opacity="0.9"
+        />
+        
+        <!-- Central icon representing analytical thinking -->
+        <path 
+            class="primary"
+            d="M16 8L24.928 13V23L16 28L7.072 23V13L16 8Z"
+            fill-opacity="1"
+        />
+    </g>
+
+    <!-- REQ: Design System Specifications - Platform name in specified brand font -->
+    <text 
+        x="45" 
+        y="21" 
+        class="primary"
+        style="font-family: Inter, sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.02em;"
+    >
+        Case Interview Practice
+    </text>
+
+    <!-- REQ: Accessibility Requirements - Decorative underline -->
+    <path 
+        class="secondary"
+        d="M45 24H180"
+        stroke-width="1"
+        stroke-opacity="0.8"
+        stroke-linecap="round"
+    />
+
+    <!-- Browser compatibility metadata -->
+    <metadata>
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+            <rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/">
+                <dc:title>Case Interview Practice Platform Logo</dc:title>
+                <dc:creator>Case Interview Practice Platform</dc:creator>
+                <dc:description>Light theme logo for dark mode contexts</dc:description>
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type>Logo</dc:type>
+            </rdf:Description>
+        </rdf:RDF>
+    </metadata>
+</svg>
