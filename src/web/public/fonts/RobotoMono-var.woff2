@@ -1,0 +1,10 @@
+1. Download the official Roboto Mono variable font file (RobotoMono-var.woff2) from Google Fonts or another authorized source
+2. Place the file at src/web/public/fonts/RobotoMono-var.woff2
+3. Configure the web server with the following cache headers:
+   - Cache-Control: public, max-age=31536000, immutable
+   - Content-Type: font/woff2
+4. Ensure the font is preloaded in the application's head section
+5. Verify the font file supports the required weight range (100-700)
+6. Test font rendering in both light and dark modes
+7. Confirm WCAG 2.1 AA compliance across all font weights
+8. Validate font display behavior with 'swap' strategy
