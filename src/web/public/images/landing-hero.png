@@ -1,0 +1,44 @@
+Image Technical Requirements:
+- Format: PNG with lossless compression
+- Dimensions: 1440px × 800px (16:9 aspect ratio)
+- Color Profile: sRGB
+- Max File Size: 250KB
+- Bit Depth: 8-bit
+- Quality: 90
+- Optimization: Next.js and Vercel Image Optimization compatible
+
+Design Requirements:
+- Color Scheme:
+  - Primary: #0F172A
+  - Secondary: #3B82F6
+  - Accent: #22C55E
+  - Background: #FFFFFF
+  - Text: #1E293B
+- Style: Modern, professional consulting aesthetic with AI technology integration
+- Composition: Left-aligned content with balanced visual elements
+- Visual Hierarchy: Primary focal point with clear information hierarchy
+
+Accessibility Requirements:
+- Alt Text: "Case Interview Practice Platform interface showing AI-powered interview preparation features and professional consulting scenarios"
+- Contrast Ratio: 4.5:1 minimum
+- Text Readability: WCAG 2.1 AA standards compliant
+
+Responsive Design Requirements:
+Mobile (320px+):
+- Max Width: 100vw
+- Height: auto
+
+Tablet (768px+):
+- Max Width: 100%
+- Height: auto
+
+Desktop (1024px+):
+- Width: 1440px
+- Height: 800px
+
+Performance Optimization:
+- CDN: Vercel Edge Network
+- Cache Headers:
+  Browser Cache: max-age=31536000
+  CDN Cache: s-maxage=31536000
+  Stale While Revalidate: 86400
