@@ -1,0 +1,156 @@
+# CI workflow for automated testing, type checking, and linting
+# Requirements addressed:
+# - Development Environment: CI pipeline with Jest testing, TypeScript compilation, and ESLint validation
+# - Testing Requirements: Automated testing including unit tests, integration tests, and code coverage reports
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: '18.x'
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+jobs:
+  build:
+    name: Build and Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # Frontend setup and validation
+      - name: Cache frontend dependencies
+        uses: actions/cache@v3
+        with:
+          path: src/web/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('src/web/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install frontend dependencies
+        working-directory: src/web
+        run: npm ci
+
+      - name: Frontend type checking
+        working-directory: src/web
+        run: npm run type-check
+
+      - name: Frontend linting
+        working-directory: src/web
+        run: npm run lint
+
+      # Backend setup and validation
+      - name: Cache backend dependencies
+        uses: actions/cache@v3
+        with:
+          path: src/backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('src/backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Install backend dependencies
+        working-directory: src/backend
+        run: npm ci
+
+      - name: Backend type checking
+        working-directory: src/backend
+        run: npm run type-check
+
+      - name: Backend linting
+        working-directory: src/backend
+        run: npm run lint
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # Frontend tests
+      - name: Cache frontend dependencies
+        uses: actions/cache@v3
+        with:
+          path: src/web/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('src/web/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install frontend dependencies
+        working-directory: src/web
+        run: npm ci
+
+      - name: Run frontend unit tests with coverage
+        working-directory: src/web
+        run: npm run test:coverage
+
+      - name: Install Playwright browsers
+        working-directory: src/web
+        run: npx playwright install --with-deps
+
+      - name: Run frontend E2E tests
+        working-directory: src/web
+        run: npx playwright test
+
+      # Backend tests
+      - name: Cache backend dependencies
+        uses: actions/cache@v3
+        with:
+          path: src/backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('src/backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Install backend dependencies
+        working-directory: src/backend
+        run: npm ci
+
+      - name: Run backend unit tests with coverage
+        working-directory: src/backend
+        run: npm run test:coverage
+
+      # Upload coverage reports
+      - name: Upload frontend coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-coverage
+          path: src/web/coverage
+          retention-days: 14
+
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-coverage
+          path: src/backend/coverage
+          retention-days: 14
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: src/web/playwright-report/
+          retention-days: 14
