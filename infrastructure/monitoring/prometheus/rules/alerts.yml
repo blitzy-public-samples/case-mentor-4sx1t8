@@ -1,0 +1,94 @@
+# Human Tasks:
+# 1. Verify Prometheus server is configured to load these alert rules
+# 2. Configure alert manager to handle notifications based on severity labels
+# 3. Set up appropriate notification channels (email, Slack, etc.) for different alert categories
+
+# Prometheus Alert Rules Configuration
+# Version: Prometheus 2.45.0
+
+# Requirement: System Performance - Alert when API response times exceed 200ms for 95% of requests
+# Requirement: Platform Stability - Alert when platform uptime drops below 99.9% target
+# Requirement: User Engagement - Monitor and alert on drill completion rates below 80%
+
+groups:
+  # API Performance and Error Monitoring
+  - name: api_alerts
+    rules:
+      - alert: HighLatency
+        expr: job:http_request_duration_seconds:p95 > 0.2
+        for: 5m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: API latency exceeds 200ms threshold
+          description: 95th percentile of API response times is above 200ms for 5 minutes
+
+      - alert: HighErrorRate
+        expr: job:http_errors_total:ratio5m > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: reliability
+        annotations:
+          summary: High API error rate detected
+          description: Error rate exceeds 5% over 5 minute period
+
+  # Platform Stability and Availability Monitoring
+  - name: platform_alerts
+    rules:
+      - alert: LowUptime
+        expr: job:http_errors_total:ratio5m > 0.001
+        for: 15m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: Platform availability below target
+          description: System uptime has dropped below 99.9% over 15 minute period
+
+      - alert: LowDrillCompletionRate
+        expr: job:drill_completion:ratio1h < 0.8
+        for: 1h
+        labels:
+          severity: warning
+          category: engagement
+        annotations:
+          summary: Low drill completion rate
+          description: Drill completion rate has fallen below 80% target
+
+  # Resource Utilization Monitoring
+  - name: resource_alerts
+    rules:
+      - alert: HighMemoryUsage
+        expr: job:edge_function_memory:bytes / process_memory_limit_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: High memory utilization
+          description: Memory usage exceeds 85% of limit for 10 minutes
+
+      - alert: LowCacheHitRate
+        expr: job:cache_hit_ratio:5m < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: Low cache hit rate
+          description: Cache hit rate below 70% threshold for 15 minutes
+
+  # External Dependencies Monitoring
+  - name: external_service_alerts
+    rules:
+      - alert: ExternalServiceDown
+        expr: external_service_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: External service unavailable
+          description: '{{ $labels.service }} has been down for 5 minutes'
