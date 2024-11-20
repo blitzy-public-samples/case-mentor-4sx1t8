@@ -1,0 +1,132 @@
+# Human Tasks:
+# 1. Set GRAFANA_ADMIN_PASSWORD environment variable before deployment
+# 2. Ensure sufficient disk space for volume mounts
+# 3. Verify host ports 9090, 3000, and 9093 are available
+# 4. Configure firewall rules to allow access to exposed ports
+
+version: '3.8'
+
+# Requirement: Monitoring & Observability - Define containerized monitoring stack
+services:
+  # Prometheus Service Configuration
+  # Version: v2.45.0
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    volumes:
+      - type: bind
+        source: ./prometheus/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+      - type: volume
+        source: prometheus_data
+        target: /prometheus
+    ports:
+      - target: 9090
+        published: 9090
+        protocol: tcp
+        mode: host
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    networks:
+      - monitoring
+    restart: unless-stopped
+    user: "nobody:nogroup"
+    security_opt:
+      - no-new-privileges:true
+
+  # Grafana Service Configuration
+  # Version: 9.5.0
+  grafana:
+    image: grafana/grafana:9.5.0
+    container_name: grafana
+    volumes:
+      - type: bind
+        source: ./grafana/datasources
+        target: /etc/grafana/provisioning/datasources
+        read_only: true
+      - type: volume
+        source: grafana_data
+        target: /var/lib/grafana
+    ports:
+      - target: 3000
+        published: 3000
+        protocol: tcp
+        mode: host
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    user: "472:472"
+    security_opt:
+      - no-new-privileges:true
+
+  # AlertManager Service Configuration
+  # Version: v0.25.0
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: alertmanager
+    volumes:
+      - type: volume
+        source: alertmanager_data
+        target: /alertmanager
+    ports:
+      - target: 9093
+        published: 9093
+        protocol: tcp
+        mode: host
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    user: "nobody:nogroup"
+    security_opt:
+      - no-new-privileges:true
+
+# Requirement: System Performance - Enable monitoring infrastructure
+# Requirement: Platform Stability - Support monitoring of 99.9% uptime
+volumes:
+  prometheus_data:
+    name: prometheus_data
+    driver: local
+    driver_opts:
+      type: none
+      device: /data/prometheus
+      o: bind
+  grafana_data:
+    name: grafana_data
+    driver: local
+    driver_opts:
+      type: none
+      device: /data/grafana
+      o: bind
+  alertmanager_data:
+    name: alertmanager_data
+    driver: local
+    driver_opts:
+      type: none
+      device: /data/alertmanager
+      o: bind
+
+# Requirement: Monitoring & Observability - Define containerized monitoring stack
+networks:
+  monitoring:
+    name: monitoring
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
