@@ -1,0 +1,141 @@
+/* Human Tasks:
+ * 1. Verify all required Tailwind plugins are installed (@tailwindcss/typography v0.5.10, @tailwindcss/forms v0.5.7)
+ * 2. Ensure Inter and Roboto Mono fonts are properly loaded from Google Fonts
+ * 3. Validate color contrast ratios meet WCAG 2.1 AA standards
+ * 4. Test responsive layouts across all target breakpoints
+ */
+
+/* Import core styles and utilities */
+@import '../styles/tailwind.css';
+@import '../styles/components.css';
+@import '../styles/animations.css';
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Import web fonts and define typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Define design system tokens and CSS variables */
+:root {
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* Color Palette */
+  --primary: #0F172A;
+  --secondary: #3B82F6;
+  --accent: #22C55E;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --background: #FFFFFF;
+  --foreground: #0F172A;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Border Radius */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Base HTML and body styles */
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Selection and focus styles */
+::selection {
+  background-color: var(--secondary);
+  color: white;
+}
+
+/* Requirement: Component Library (7.1.2)
+ * Global component styles */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Focus styles for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+/* Requirement: Responsive Design (6.3)
+ * Responsive breakpoints */
+@media (max-width: 640px) {
+  :root {
+    --space-12: 2rem;
+    --space-16: 3rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root {
+    --space-12: 2.5rem;
+    --space-16: 3.5rem;
+  }
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * High contrast mode adjustments */
+@media (forced-colors: active) {
+  :root {
+    --primary: CanvasText;
+    --secondary: Highlight;
+    --accent: Highlight;
+    --background: Canvas;
+    --foreground: CanvasText;
+  }
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0F172A;
+    --foreground: #FFFFFF;
+  }
+
+  body {
+    color-scheme: dark;
+  }
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
