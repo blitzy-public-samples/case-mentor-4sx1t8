@@ -1,0 +1,139 @@
+# Human Tasks:
+# 1. Generate and replace the ANON_KEY and SERVICE_KEY with secure JWT tokens
+# 2. Replace GOTRUE_SITE_URL with the actual frontend application URL in production
+# 3. Replace JWT_SECRET with a secure secret key
+# 4. Review and adjust resource limits based on production requirements
+
+version: '3.8'
+
+# Addressing requirement: Development Environment Containerization
+# Location: 9. INFRASTRUCTURE/9.3 CONTAINERIZATION/Development Containers
+services:
+  # PostgreSQL database with Supabase extensions
+  postgres:
+    image: supabase/postgres:14  # Version 14
+    container_name: case_platform_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      MAX_CONNECTIONS: 100
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - supabase_network
+
+  # PostgREST API service
+  rest:
+    image: postgrest/postgrest:v10.1.2  # Version v10.1.2
+    container_name: case_platform_rest
+    ports:
+      - "54321:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/postgres
+      PGRST_DB_SCHEMA: public,storage,auth
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt-token
+      PGRST_DB_EXTRA_SEARCH_PATH: public
+      PGRST_DB_MAX_ROWS: 1000
+    depends_on:
+      - postgres
+    networks:
+      - supabase_network
+
+  # GoTrue authentication service
+  auth:
+    image: supabase/gotrue:v2.82.4  # Version v2.82.4
+    container_name: case_platform_auth
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_JWT_SECRET: super-secret-jwt-token
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_MAILER_AUTOCONFIRM: true
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      GOTRUE_ENABLE_SIGNUP: true
+    depends_on:
+      - postgres
+    networks:
+      - supabase_network
+
+  # Real-time subscription service
+  realtime:
+    image: supabase/realtime:v2.7.3  # Version v2.7.3
+    container_name: case_platform_realtime
+    ports:
+      - "4000:4000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+      PORT: 4000
+      JWT_SECRET: super-secret-jwt-token
+    depends_on:
+      - postgres
+    networks:
+      - supabase_network
+
+  # Storage API service
+  storage:
+    image: supabase/storage-api:v0.40.4  # Version v0.40.4
+    container_name: case_platform_storage
+    ports:
+      - "5000:5000"
+    environment:
+      ANON_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9
+      SERVICE_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: super-secret-jwt-token
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+      FILE_SIZE_LIMIT: 5242880
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+    volumes:
+      - storage_data:/var/lib/storage
+    depends_on:
+      - rest
+    networks:
+      - supabase_network
+
+  # Supabase Studio management interface
+  studio:
+    image: supabase/studio:v0.23.9  # Version v0.23.9
+    container_name: case_platform_studio
+    ports:
+      - "3001:3000"
+    environment:
+      SUPABASE_URL: http://rest:3000
+      STUDIO_PG_META_URL: http://meta:8080
+      SUPABASE_ANON_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9
+      SUPABASE_SERVICE_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9
+      API_URL: http://localhost:54321
+    depends_on:
+      - rest
+    networks:
+      - supabase_network
+
+# Addressing requirement: Database Layer
+# Location: 5. SYSTEM ARCHITECTURE/5.2 Component Details/Database Layer
+volumes:
+  db_data:
+    driver: local
+  storage_data:
+    driver: local
+
+networks:
+  supabase_network:
+    driver: bridge
