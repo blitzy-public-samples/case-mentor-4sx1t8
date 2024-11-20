@@ -1,0 +1,98 @@
+# Required human setup tasks:
+# 1. Configure Vercel project and obtain VERCEL_ORG_ID and VERCEL_PROJECT_ID
+# 2. Add repository secrets for all environment variables (Supabase, OpenAI, Stripe, Resend)
+# 3. Ensure Vercel GitHub integration is enabled for preview deployments
+# 4. Configure appropriate GITHUB_TOKEN permissions for PR comments
+
+name: Deploy Preview Environment
+
+# Requirement: Deployment Pipeline
+# Trigger preview deployments on PR events
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Define environment variables
+env:
+  NODE_VERSION: '18.x'
+  PNPM_VERSION: '8.x'
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+# Prevent concurrent deployments of the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # Requirement: Development Environment
+  # Deploy preview environment for feature validation
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: [validate] # Reuse validation job from ci.yml
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.preview-url }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3 # v3 specified in dependencies
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3 # v3 specified in dependencies
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2 # v2 specified in dependencies
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        working-directory: src/web
+        run: pnpm install --frozen-lockfile
+
+      # Requirement: System Performance
+      # Build application with performance optimizations
+      - name: Build application
+        working-directory: src/web
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+      # Requirement: Development Environment
+      # Deploy to Vercel preview environment
+      - name: Deploy to Vercel
+        id: deploy
+        uses: amondnet/vercel-action@v25 # v25 specified in dependencies
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
+          working-directory: src/web
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-comment: true
+
+      # Add preview URL to PR for easy access
+      - name: Comment Preview URL
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue_number = context.issue.number;
+            const preview_url = '${{ steps.deploy.outputs.preview-url }}';
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: `🚀 Preview deployment is ready!\nURL: ${preview_url}\n\nThis preview environment allows testing and validation before production deployment.`
+            });
