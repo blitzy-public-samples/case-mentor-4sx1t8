@@ -1,0 +1,187 @@
+/* Human Tasks:
+1. Verify font loading performance with browser dev tools
+2. Test color contrast ratios with accessibility tools
+3. Validate responsive layouts across different viewport sizes
+4. Check reduced motion preferences on supported devices
+*/
+
+/* Google Fonts Import - Inter and Roboto Mono */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap');
+
+/* Design System Implementation - Theme Tokens */
+:root {
+  --font-primary: Inter, system-ui, -apple-system, sans-serif;
+  --font-secondary: Roboto Mono, monospace;
+  --primary-color: #0F172A;
+  --primary-light: #1E293B;
+  --primary-dark: #020617;
+  --secondary-color: #3B82F6;
+  --secondary-light: #60A5FA;
+  --secondary-dark: #2563EB;
+  --accent-color: #22C55E;
+  --accent-light: #4ADE80;
+  --accent-dark: #16A34A;
+  --error-color: #EF4444;
+  --error-light: #FCA5A5;
+  --error-dark: #DC2626;
+  --warning-color: #F59E0B;
+  --warning-light: #FCD34D;
+  --warning-dark: #D97706;
+}
+
+/* CSS Reset - Modern baseline */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-style: solid;
+  border-width: 0;
+}
+
+/* Base HTML Styles */
+html {
+  font-family: var(--font-primary);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #F8FAFC;
+  color: var(--primary-color);
+}
+
+/* Element Resets */
+ul, ol {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Utility Classes */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Accessibility - WCAG 2.1 AA Compliance */
+.focus-visible-outline:focus-visible {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Responsive Media Queries */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  
+  body {
+    background-color: var(--primary-dark);
+    color: #F8FAFC;
+  }
+}
+
+@media print {
+  body {
+    background: none;
+    color: #000;
+  }
+  
+  @page {
+    margin: 1.5cm;
+  }
+}
+
+/* Focus Management */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Form Element Resets */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+/* Interactive Element Defaults */
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+/* Image Handling */
+img,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Table Defaults */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
+/* Selection Styling */
+::selection {
+  background-color: var(--secondary-light);
+  color: var(--primary-dark);
+}
+
+/* Smooth Scrolling - Disabled when reduced motion is preferred */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
