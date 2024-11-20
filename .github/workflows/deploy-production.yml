@@ -1,0 +1,131 @@
+# Required external setup and configuration tasks:
+# 1. Configure Vercel project and obtain VERCEL_ORG_ID and VERCEL_PROJECT_ID
+# 2. Set up all required environment secrets in GitHub repository settings
+# 3. Configure branch protection rules for production deployment
+# 4. Set up monitoring for deployment health checks
+# 5. Configure Vercel project settings for zero-downtime deployments
+
+name: Production Deployment
+
+# Requirement: Deployment Pipeline
+# Trigger deployment only on version tags or manual dispatch
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+# Configure environment variables
+env:
+  NODE_VERSION: '18.x'
+  PNPM_VERSION: '8.x'
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+# Requirement: Platform Stability
+# Ensure only one production deployment runs at a time
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      # Validate semantic version tag format
+      - name: Validate version tag
+        if: github.event_name == 'push'
+        run: |
+          if ! [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version tag format. Must match v*.*.* (e.g., v1.0.0)"
+            exit 1
+          fi
+
+      # Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      # Setup pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      # Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Requirement: Code Quality & System Performance
+      # Run validation checks from CI workflow
+      - name: Run code validation
+        uses: ./.github/workflows/ci.yml
+        with:
+          job: validate
+
+      # Run tests from CI workflow
+      - name: Run tests
+        uses: ./.github/workflows/ci.yml
+        with:
+          job: test
+
+      # Build production application
+      - name: Build application
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+      # Requirement: Deployment Pipeline
+      # Deploy to Vercel production environment
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./src/web
+
+      # Requirement: System Performance & Platform Stability
+      # Verify deployment health and API response times
+      - name: Health check
+        run: |
+          DEPLOY_URL=$(vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ env.VERCEL_ORG_ID }} ls | grep ${{ env.VERCEL_PROJECT_ID }} | awk '{print $2}')
+          echo "Deployment URL: $DEPLOY_URL"
+          
+          # Wait for deployment to stabilize
+          sleep 30
+          
+          # Check API response times
+          for i in {1..10}; do
+            START_TIME=$(date +%s%N)
+            curl -s -o /dev/null -w "%{time_total}\n" "$DEPLOY_URL/api/health" | \
+            awk '{ if ($1 > 0.2) { print "API response time exceeded 200ms threshold"; exit 1 } }'
+            sleep 2
+          done
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      # Send deployment notification
+      - name: Send deployment notification
+        if: always()
+        run: |
+          DEPLOY_STATUS="${{ job.status }}"
+          curl -X POST ${{ secrets.NOTIFICATION_WEBHOOK_URL }} \
+          -H "Content-Type: application/json" \
+          -d "{\"deployment\": \"production\", \"status\": \"$DEPLOY_STATUS\", \"version\": \"${{ github.ref_name }}\"}"
