@@ -1,0 +1,180 @@
+/* Human Tasks:
+ * 1. Verify shadcn/ui integration is properly configured
+ * 2. Test all component styles with screen readers
+ * 3. Validate color contrast ratios meet WCAG 2.1 AA standards
+ * 4. Ensure animations respect prefers-reduced-motion settings
+ */
+
+/* Import base styles and animations */
+@import './tailwind.css';
+@import './animations.css';
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Define component-specific styles extending Tailwind's utility classes */
+@layer components {
+  /* Navigation Components */
+  .nav-link {
+    @apply text-sm font-medium text-gray-700 hover:text-primary transition-colors animate-fade-in;
+  }
+
+  .nav-link-active {
+    @apply text-primary font-semibold;
+  }
+
+  .navbar {
+    @apply h-16 border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50;
+  }
+
+  .sidebar {
+    @apply w-64 border-r bg-gray-50 h-screen;
+  }
+
+  /* Form Components */
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-dark focus:ring-primary-light focus-ring;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary-dark focus:ring-secondary-light focus-ring;
+  }
+
+  .input-field {
+    @apply w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary focus-ring;
+  }
+
+  .form-group {
+    @apply space-y-2 mb-4;
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-gray-700 block;
+  }
+
+  /* Feedback Components */
+  .feedback-card {
+    @apply bg-gray-50 p-4 rounded-lg border-l-4 border-primary animate-slide-in;
+  }
+
+  .alert-success {
+    @apply bg-green-50 text-green-800 border-l-4 border-green-500 p-4 rounded animate-slide-in;
+  }
+
+  .alert-error {
+    @apply bg-red-50 text-red-800 border-l-4 border-red-500 p-4 rounded animate-slide-in;
+  }
+
+  .progress-bar {
+    @apply h-2 rounded-full bg-primary;
+  }
+
+  /* Content Components */
+  .card-drill {
+    @apply p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow animate-scale-in;
+  }
+
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-12 animate-fade-in;
+  }
+
+  .simulation-canvas {
+    @apply w-full aspect-video rounded-lg border border-gray-200;
+  }
+
+  .tooltip {
+    @apply px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-sm animate-fade-in;
+  }
+}
+
+/* Requirement: Component Library (7.1.2)
+ * shadcn/ui component style overrides */
+@layer components {
+  .shadcn-button {
+    @apply rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-base;
+  }
+
+  .shadcn-card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+
+  .shadcn-input {
+    @apply rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-base;
+  }
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Ensure WCAG 2.1 AA compliance */
+@layer utilities {
+  /* Improved focus visibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  /* Screen reader only text */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+  }
+
+  /* Skip to main content link */
+  .skip-link {
+    @apply absolute left-0 p-3 -translate-y-full bg-white focus:translate-y-0 transition-transform;
+  }
+
+  /* High contrast mode adjustments */
+  @media (forced-colors: active) {
+    .btn-primary,
+    .btn-secondary {
+      @apply border-2;
+    }
+
+    .card-drill,
+    .feedback-card {
+      @apply border;
+    }
+  }
+}
+
+/* Requirement: Design System Specifications (7.1.1)
+ * Responsive breakpoint adjustments */
+@media (max-width: 768px) {
+  .container {
+    @apply px-4;
+  }
+
+  .sidebar {
+    @apply w-full;
+  }
+
+  .card-drill {
+    @apply p-4;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    @apply px-6;
+  }
+
+  .sidebar {
+    @apply w-56;
+  }
+}
+
+@media (min-width: 1025px) {
+  .container {
+    @apply px-8;
+  }
+}
+
+/* Requirement: Accessibility Requirements (7.1.4)
+ * Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-in,
+  .animate-scale-in {
+    @apply transition-none transform-none animate-none;
+  }
+}
