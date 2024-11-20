@@ -1,0 +1,119 @@
+# Preview Deployment Workflow
+# Requirements addressed:
+# - Development Environment: Preview deployment pipeline with automated testing and validation for pull requests
+# - Deployment Pipeline: Preview stage deployment with automated testing and performance validation
+
+name: Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '18.x'
+  PNPM_VERSION: '8.x'
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+jobs:
+  preview_deploy:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    environment: preview
+    needs: [test] # Reference test job from ci.yml
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # v3 specified in dependencies
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3 # v3 specified in dependencies
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2 # v2 specified in dependencies
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        working-directory: src/web
+        run: pnpm install
+
+      - name: Build application
+        working-directory: src/web
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Deploy to Vercel Preview
+        id: deploy
+        uses: vercel/actions/deploy@v3 # v3 specified in dependencies
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-comment: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save Preview URL
+        run: echo "PREVIEW_URL=${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_ENV
+
+  preview_health_check:
+    name: Validate Preview Environment
+    runs-on: ubuntu-latest
+    needs: [preview_deploy]
+    
+    steps:
+      - name: Wait for deployment
+        run: sleep 30 # Allow time for deployment to stabilize
+
+      - name: Verify preview deployment
+        run: |
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.PREVIEW_URL }})
+          if [ "$status_code" -ne 200 ]; then
+            echo "Preview deployment health check failed with status: $status_code"
+            exit 1
+          fi
+
+      - name: Check preview API health
+        run: |
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.PREVIEW_URL }}/api/health)
+          if [ "$status_code" -ne 200 ]; then
+            echo "API health check failed with status: $status_code"
+            exit 1
+          fi
+
+      - name: Setup Node.js for Lighthouse
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Lighthouse
+        run: npm install -g lighthouse
+
+      - name: Validate preview performance
+        run: |
+          lighthouse ${{ env.PREVIEW_URL }} \
+            --output json \
+            --output-path=./lighthouse-report.json \
+            --chrome-flags="--headless --no-sandbox --disable-gpu"
+
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-report
+          path: lighthouse-report.json
+          retention-days: 7
+
+      - name: Check Lighthouse scores
+        run: |
+          PERFORMANCE_SCORE=$(jq '.categories.performance.score' lighthouse-report.json)
+          if (( $(echo "$PERFORMANCE_SCORE < 0.7" | bc -l) )); then
+            echo "Performance score below threshold: $PERFORMANCE_SCORE"
+            exit 1
+          fi
