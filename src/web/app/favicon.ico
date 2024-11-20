@@ -1,0 +1,30 @@
+1. Use an icon editor or image editing software that supports ICO format export 
+   (e.g., Adobe Photoshop with ICO plugin, GIMP, or dedicated icon editors)
+
+2. Create icon with the following specifications:
+   - Format: ICO (Windows Icon)
+   - Include both required sizes: 16x16 and 32x32 pixels
+   - Color profile: RGB
+   - Primary brand color: #0F172A
+   - Background: Transparent
+   - Design should be simple and recognizable at small sizes
+
+3. Export settings:
+   - Save as .ico format
+   - Ensure multiple resolutions are embedded (16x16, 32x32)
+   - Verify transparency is preserved
+   - Confirm color accuracy of #0F172A
+
+4. Place the generated favicon.ico file at:
+   src/web/app/favicon.ico
+
+5. Validation steps:
+   - Test favicon in multiple browsers (Chrome, Firefox, Safari, Edge)
+   - Verify appearance in browser tabs
+   - Check display in bookmarks
+   - Confirm visibility in desktop shortcuts
+   - Validate both 16x16 and 32x32 resolutions are included using an ICO file inspector
+
+Note: This file implements requirements from:
+- Design System Compliance (7.1.1)
+- Visual Identity (7.1.1)
