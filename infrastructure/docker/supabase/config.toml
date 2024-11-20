@@ -1,0 +1,32 @@
+# Supabase Configuration File
+# Version: Latest
+# Purpose: Local development environment configuration
+
+# API Configuration (PostgREST)
+[api]
+port = 54321
+schemas = ["public", "storage", "auth"]
+extra_search_path = "public"
+max_rows = 1000
+
+# Database Configuration (PostgreSQL)
+[db]
+port = 5432
+major_version = 14
+max_connections = 100
+
+# Authentication Configuration (GoTrue)
+[auth]
+site_url = "http://localhost:3000"
+jwt_exp = 3600
+enable_signup = true
+
+# Studio Configuration
+[studio]
+port = 3001
+api_url = "http://localhost:54321"
+
+# Storage Configuration
+[storage]
+file_size_limit = "5242880"
+backend = "file"
