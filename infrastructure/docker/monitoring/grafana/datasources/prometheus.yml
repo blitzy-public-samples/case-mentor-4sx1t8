@@ -1,0 +1,38 @@
+# Grafana Datasource Configuration for Prometheus
+# Grafana Version: 9.5.0
+# Prometheus Version: 2.45.0
+
+# Requirement: System Performance - Enable monitoring of API response times
+# Requirement: Platform Stability - Support tracking of 99.9% uptime
+# Requirement: Monitoring & Observability - Configure Prometheus datasource
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    version: 1
+    editable: true
+    jsonData:
+      # Aligned with Prometheus global config from prometheus.yml
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.45.0
+      # Matches scrape_interval from prometheus.yml
+      scrapeInterval: "15s"
+      # Matches evaluation_interval from prometheus.yml
+      evaluationInterval: "15s"
+      # Matches scrape_timeout from prometheus.yml
+      scrapeTimeout: "10s"
+      # Tracing configuration for exemplars
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+    secureJsonData:
+      httpHeaderName1: X-Scope-OrgID
